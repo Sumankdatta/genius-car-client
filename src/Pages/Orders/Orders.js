@@ -1,16 +1,34 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../../context/AuthProvider';
 import OrderRow from './OrderRow';
+import { useNavigate } from 'react-router-dom';
 
 const Orders = () => {
-    const { user } = useContext(AuthContext);
-    const [orders, setOrders] = useState([])
+    const { user, logOut } = useContext(AuthContext);
+    const [orders, setOrders] = useState([]);
+    const navigate = useNavigate();
+
 
     useEffect(() => {
-        fetch(`http://localhost:5000/orders?email=${user?.email}`)
-            .then(res => res.json())
-            .then(data => setOrders(data))
-    }, [user?.email])
+        fetch(`http://localhost:5000/orders?email=${user?.email}`, {
+            method: "GET",
+            headers: {
+                authorization: `Bearer ${localStorage.getItem('genius-token')}`
+            }
+        })
+            .then(res => {
+                if (res.status === 403 || res.status === 401) {
+                    logOut()
+                    navigate('/login')
+
+                }
+                return res.json()
+            })
+
+            .then(data => {
+                setOrders(data)
+            })
+    }, [user?.email, logOut, navigate])
 
 
     const handleDelete = (_id) => {
